@@ -22,8 +22,6 @@ final class StatusItemController {
         breathingWindowController.onDismiss = { [weak self] in
             guard let self else { return }
             self.statusItem?.button?.highlight(false)
-            self.appState.markDone()
-            self.update()
         }
     }
     
@@ -51,6 +49,12 @@ final class StatusItemController {
         primedItem.state = appState.isPrimed ? .on : .off
         primedItem.image = NSImage(systemSymbolName: "bell", accessibilityDescription: "Reminder")
         menu.addItem(primedItem)
+        
+        // Breathe now
+        let breatheNowItem = NSMenuItem(title: "Breathe now…", action: #selector(breatheNowClicked), keyEquivalent: "b")
+        breatheNowItem.target = self
+        breatheNowItem.image = NSImage(systemSymbolName: "wind", accessibilityDescription: "Breathe")
+        menu.addItem(breatheNowItem)
         
         let separator1 = NSMenuItem.separator()
         separator1.tag = 3
@@ -115,11 +119,6 @@ final class StatusItemController {
             statusItem?.menu = menu
             statusItem?.button?.action = nil
             statusItem?.button?.target = nil
-            
-            // Dismiss breathing window if it's still showing
-            if breathingWindowController.isVisible {
-                breathingWindowController.dismiss()
-            }
         }
         
         // Handle animation state
@@ -267,9 +266,23 @@ final class StatusItemController {
         if breathingWindowController.isVisible {
             breathingWindowController.dismiss()
         } else {
-            statusItem?.button?.highlight(true)
-            breathingWindowController.show(below: statusItem?.button)
+            showBreathingWindow()
+            // Mark done immediately so the menu bar icon stops animating
+            appState.markDone()
+            update()
         }
+    }
+    
+    private func showBreathingWindow() {
+        statusItem?.button?.highlight(true)
+        breathingWindowController.show(
+            below: statusItem?.button,
+            cadence: appState.settings.breathingCadence
+        )
+    }
+    
+    @objc private func breatheNowClicked() {
+        showBreathingWindow()
     }
     
     @objc private func doneClicked() {

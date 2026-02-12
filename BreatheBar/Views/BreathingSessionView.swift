@@ -34,15 +34,19 @@ struct LeafPetal: Shape {
 // MARK: - Petal Flower View
 
 /// A Mindfulness-style animated flower with two layers of leaf petals.
+/// The layers rotate continuously for a sense of progression, while the
+/// expansion/contraction loops in cadence with the breathing cycle.
 struct PetalFlowerView: View {
     let expansion: Double
     let elapsed: Double
+    let cycleLength: Double
 
     private let petalCount = 7
-    private let cycleLength: Double = 8.0
 
     var body: some View {
-        let flowerRotation = expansion * 12
+        // Continuous rotation independent of breathing phase
+        let rotation1 = elapsed * 8    // ~45s per full turn
+        let rotation2 = elapsed * -5   // counter-rotate, ~72s per full turn
 
         ZStack {
             // Layer 1: outer petals (green)
@@ -65,19 +69,18 @@ struct PetalFlowerView: View {
                     .frame(width: 26, height: 52)
                     .shadow(color: Color(red: 0.15, green: 0.40, blue: 0.25).opacity(0.35), radius: 5, y: 2)
                     .offset(y: -offset)
-                    .rotationEffect(.degrees(angle + flowerRotation))
+                    .rotationEffect(.degrees(angle + rotation1))
             }
 
             // Layer 2: inner petals (teal, with slight timing offset)
-            petalLayer2
+            petalLayer2(rotation: rotation2)
         }
         .scaleEffect(0.88 + expansion * 0.12)
     }
 
-    private var petalLayer2: some View {
+    private func petalLayer2(rotation: Double) -> some View {
         let phase2 = -cos((elapsed - 0.4) * .pi * 2.0 / cycleLength)
         let expansion2 = phase2 * 0.5 + 0.5
-        let rotation2 = expansion2 * 10
         let halfAngle = 360.0 / Double(petalCount) / 2.0
 
         return ForEach(0..<petalCount, id: \.self) { index in
@@ -99,7 +102,7 @@ struct PetalFlowerView: View {
                 .frame(width: 22, height: 44)
                 .shadow(color: Color(red: 0.15, green: 0.35, blue: 0.30).opacity(0.30), radius: 4, y: 1)
                 .offset(y: -offset)
-                .rotationEffect(.degrees(angle + rotation2))
+                .rotationEffect(.degrees(angle + rotation))
         }
     }
 }
@@ -109,9 +112,12 @@ struct PetalFlowerView: View {
 /// The guided breathing UI shown as a floating panel.
 struct BreathingSessionView: View {
     let startDate: Date
+    /// Duration of one inhale (or exhale) in seconds.
+    let cadence: Double
     let onDone: () -> Void
 
-    private let cycleLength: Double = 8.0
+    /// Full breathing cycle = inhale + exhale.
+    private var cycleLength: Double { cadence * 2.0 }
 
     var body: some View {
         TimelineView(.animation) { timeline in
@@ -129,7 +135,7 @@ struct BreathingSessionView: View {
                     .foregroundStyle(.secondary)
                     .frame(height: 20)
 
-                PetalFlowerView(expansion: expansion, elapsed: elapsed)
+                PetalFlowerView(expansion: expansion, elapsed: elapsed, cycleLength: cycleLength)
                     .frame(width: 160, height: 160)
 
                 Button(action: onDone) {
