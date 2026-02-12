@@ -38,7 +38,7 @@ final class StatusItemController {
         menu.addItem(separator1)
         
         // Primed toggle
-        let primedItem = NSMenuItem(title: "Primed", action: #selector(togglePrimed), keyEquivalent: "p")
+        let primedItem = NSMenuItem(title: "Remind me to Breathe", action: #selector(togglePrimed), keyEquivalent: "r")
         primedItem.target = self
         primedItem.tag = 3
         primedItem.state = appState.isPrimed ? .on : .off
