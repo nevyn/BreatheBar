@@ -54,7 +54,7 @@ final class BreathingWindowController {
         if let buttonWindow = statusItemButton?.window {
             let buttonFrame = buttonWindow.frame
             let x = buttonFrame.midX - size.width / 2
-            let y = buttonFrame.minY - size.height - 4
+            let y = buttonFrame.minY - size.height - 2
             panel.setFrameOrigin(NSPoint(x: x, y: y))
         } else if let screen = NSScreen.main {
             // Fallback: top-center of screen

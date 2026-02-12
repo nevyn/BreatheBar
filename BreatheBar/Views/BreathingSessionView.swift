@@ -31,6 +31,79 @@ struct LeafPetal: Shape {
     }
 }
 
+// MARK: - Popover Shape
+
+/// A rounded rectangle with an upward-pointing arrow at the top center,
+/// drawn as a single continuous path so the material fills seamlessly.
+struct PopoverShape: Shape {
+    var cornerRadius: CGFloat = 20
+    var arrowWidth: CGFloat = 24
+    var arrowHeight: CGFloat = 12
+
+    func path(in rect: CGRect) -> Path {
+        let bodyRect = CGRect(
+            x: rect.minX,
+            y: rect.minY + arrowHeight,
+            width: rect.width,
+            height: rect.height - arrowHeight
+        )
+        let cr = cornerRadius
+        let arrowMidX = rect.midX
+        let arrowHalfW = arrowWidth / 2
+
+        var path = Path()
+
+        // Start at top-left corner of body (after corner radius)
+        path.move(to: CGPoint(x: bodyRect.minX + cr, y: bodyRect.minY))
+
+        // Top edge to left base of arrow
+        path.addLine(to: CGPoint(x: arrowMidX - arrowHalfW, y: bodyRect.minY))
+
+        // Arrow: up to tip, down to right base
+        path.addLine(to: CGPoint(x: arrowMidX, y: rect.minY))
+        path.addLine(to: CGPoint(x: arrowMidX + arrowHalfW, y: bodyRect.minY))
+
+        // Top edge to top-right corner
+        path.addLine(to: CGPoint(x: bodyRect.maxX - cr, y: bodyRect.minY))
+
+        // Top-right corner
+        path.addArc(
+            center: CGPoint(x: bodyRect.maxX - cr, y: bodyRect.minY + cr),
+            radius: cr, startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false
+        )
+
+        // Right edge to bottom-right corner
+        path.addLine(to: CGPoint(x: bodyRect.maxX, y: bodyRect.maxY - cr))
+
+        // Bottom-right corner
+        path.addArc(
+            center: CGPoint(x: bodyRect.maxX - cr, y: bodyRect.maxY - cr),
+            radius: cr, startAngle: .degrees(0), endAngle: .degrees(90), clockwise: false
+        )
+
+        // Bottom edge to bottom-left corner
+        path.addLine(to: CGPoint(x: bodyRect.minX + cr, y: bodyRect.maxY))
+
+        // Bottom-left corner
+        path.addArc(
+            center: CGPoint(x: bodyRect.minX + cr, y: bodyRect.maxY - cr),
+            radius: cr, startAngle: .degrees(90), endAngle: .degrees(180), clockwise: false
+        )
+
+        // Left edge to top-left corner
+        path.addLine(to: CGPoint(x: bodyRect.minX, y: bodyRect.minY + cr))
+
+        // Top-left corner
+        path.addArc(
+            center: CGPoint(x: bodyRect.minX + cr, y: bodyRect.minY + cr),
+            radius: cr, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false
+        )
+
+        path.closeSubpath()
+        return path
+    }
+}
+
 // MARK: - Petal Flower View
 
 /// A Mindfulness-style animated flower with two layers of leaf petals.
@@ -155,10 +228,10 @@ struct BreathingSessionView: View {
                 .tint(Color(red: 0.40, green: 0.72, blue: 0.55))
             }
             .padding(.horizontal, 30)
-            .padding(.top, 24)
+            .padding(.top, 32)  // 12pt arrow + 20pt visual padding
             .padding(.bottom, 20)
         }
         .frame(width: 250)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(.ultraThinMaterial, in: PopoverShape())
     }
 }
