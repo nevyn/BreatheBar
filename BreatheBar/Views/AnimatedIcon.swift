@@ -1,5 +1,4 @@
 import SwiftUI
-import Darwin
 
 struct AnimatedIcon: View {
     let isActive: Bool
@@ -10,7 +9,7 @@ struct AnimatedIcon: View {
         Image(systemName: "leaf.fill")
             .symbolRenderingMode(isActive ? .multicolor : .monochrome)
             .foregroundStyle(isActive ? Color.green : Color.primary)
-            .opacity(isActive ? 0.5 + 0.5 * Darwin.sin(animationPhase) : 1.0)
+            .opacity(isActive ? 0.5 + 0.5 * sin(Double(animationPhase)) : 1.0)
             .onChange(of: isActive) { _, newValue in
                 if newValue {
                     startAnimation()
