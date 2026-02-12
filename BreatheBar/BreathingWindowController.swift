@@ -50,30 +50,34 @@ final class BreathingWindowController {
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.fullScreenAuxiliary, .transient]
 
-        // Position below the status item, centered horizontally
+        // Calculate final position below the status item, centered horizontally
+        var finalOrigin: NSPoint
         if let buttonWindow = statusItemButton?.window {
             let buttonFrame = buttonWindow.frame
             let x = buttonFrame.midX - size.width / 2
             let y = buttonFrame.minY - size.height - 2
-            panel.setFrameOrigin(NSPoint(x: x, y: y))
+            finalOrigin = NSPoint(x: x, y: y)
         } else if let screen = NSScreen.main {
-            // Fallback: top-center of screen
             let visibleFrame = screen.visibleFrame
             let x = visibleFrame.midX - size.width / 2
             let y = visibleFrame.maxY - size.height - 8
-            panel.setFrameOrigin(NSPoint(x: x, y: y))
+            finalOrigin = NSPoint(x: x, y: y)
+        } else {
+            finalOrigin = .zero
         }
 
         self.panel = panel
 
-        // Fade in
+        // Start above final position, transparent -- then slide down and fade in
+        panel.setFrameOrigin(NSPoint(x: finalOrigin.x, y: finalOrigin.y + 8))
         panel.alphaValue = 0
         panel.orderFrontRegardless()
 
         NSAnimationContext.beginGrouping()
-        NSAnimationContext.current.duration = 0.25
+        NSAnimationContext.current.duration = 0.3
         NSAnimationContext.current.timingFunction = CAMediaTimingFunction(name: .easeOut)
         panel.animator().alphaValue = 1.0
+        panel.animator().setFrameOrigin(finalOrigin)
         NSAnimationContext.endGrouping()
 
         // Click outside → dismiss
@@ -103,6 +107,10 @@ final class BreathingWindowController {
 
         removeMonitors()
 
+        // Slide up and fade out
+        var dismissOrigin = panel.frame.origin
+        dismissOrigin.y += 6
+
         NSAnimationContext.beginGrouping()
         NSAnimationContext.current.duration = 0.2
         NSAnimationContext.current.timingFunction = CAMediaTimingFunction(name: .easeIn)
@@ -112,6 +120,7 @@ final class BreathingWindowController {
             }
         }
         panel.animator().alphaValue = 0
+        panel.animator().setFrameOrigin(dismissOrigin)
         NSAnimationContext.endGrouping()
     }
 
