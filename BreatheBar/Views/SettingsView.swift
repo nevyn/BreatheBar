@@ -6,22 +6,8 @@ struct SettingsView: View {
     
     var body: some View {
         Form {
-            Section("Work Hours") {
-                HStack {
-                    Text("Start")
-                    Spacer()
-                    TimePicker(hour: $appState.settings.startHour, minute: $appState.settings.startMinute)
-                }
-                
-                HStack {
-                    Text("End")
-                    Spacer()
-                    TimePicker(hour: $appState.settings.endHour, minute: $appState.settings.endMinute)
-                }
-            }
-            
             Section("Work Days") {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: 8) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 8) {
                     ForEach(BreathingSettings.Weekday.allCases) { day in
                         Toggle(day.shortName, isOn: Binding(
                             get: { appState.settings.workDays.contains(day) },
@@ -38,12 +24,28 @@ struct SettingsView: View {
                 }
             }
             
+            Section("Work Hours") {
+                HStack {
+                    Text("Start")
+                    Spacer()
+                    TimePicker(hour: $appState.settings.startHour, minute: $appState.settings.startMinute)
+                }
+                
+                HStack {
+                    Text("End")
+                    Spacer()
+                    TimePicker(hour: $appState.settings.endHour, minute: $appState.settings.endMinute)
+                }
+            }
+            
+
+            
             Section("Startup") {
                 Toggle("Launch at Login", isOn: $appState.settings.launchAtLogin)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 320, height: 280)
+        .frame(width: 400)
         .navigationTitle("BreatheBar Settings")
     }
 }
