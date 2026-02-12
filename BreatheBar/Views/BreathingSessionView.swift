@@ -126,14 +126,21 @@ struct BreathingSessionView: View {
             // -cos starts at -1 (contracted), rises to +1 (expanded)
             let breathPhase = -cos(elapsed * .pi * 2.0 / cycleLength)
             let expansion = breathPhase * 0.5 + 0.5
-            // Inhaling while expansion is increasing (first half of cycle)
-            let isInhaling = sin(elapsed * .pi * 2.0 / cycleLength) >= 0
+            // Text opacity: fade through zero at phase transitions
+            let s = sin(elapsed * .pi * 2.0 / cycleLength)
+            let inhaleOpacity = max(0, min(1, (s - 0.15) * 5.0))
+            let exhaleOpacity = max(0, min(1, (-s - 0.15) * 5.0))
 
             VStack(spacing: 16) {
-                Text(isInhaling ? "Breathe in…" : "Breathe out…")
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .frame(height: 20)
+                ZStack {
+                    Text("Breathe in…")
+                        .opacity(inhaleOpacity)
+                    Text("Breathe out…")
+                        .opacity(exhaleOpacity)
+                }
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(.secondary)
+                .frame(height: 20)
 
                 PetalFlowerView(expansion: expansion, elapsed: elapsed, cycleLength: cycleLength)
                     .frame(width: 160, height: 160)
