@@ -46,7 +46,6 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(width: 400)
-        .navigationTitle("BreatheBar Settings")
     }
 }
 

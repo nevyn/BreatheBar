@@ -7,12 +7,14 @@ final class StatusItemController {
     private var animationTimer: Timer?
     private var animationStartTime: Date?
     private let appState: AppState
+    private let settingsWindowController: SettingsWindowController
     
     // Fixed icon size to prevent jumping
     private let iconSize: CGFloat = 22
     
     init(appState: AppState) {
         self.appState = appState
+        self.settingsWindowController = SettingsWindowController(appState: appState)
         setupStatusItem()
     }
     
@@ -242,8 +244,7 @@ final class StatusItemController {
     }
     
     @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        NotificationCenter.default.post(name: .openBreatheBarSettings, object: nil)
+        settingsWindowController.showSettings()
     }
     
     @objc private func showAbout() {
