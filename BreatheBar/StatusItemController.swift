@@ -32,28 +32,31 @@ final class StatusItemController {
         doneItem.target = self
         doneItem.tag = 1
         doneItem.isHidden = true
+        doneItem.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Done")
         menu.addItem(doneItem)
-        
-        let separator1 = NSMenuItem.separator()
-        separator1.tag = 2
-        separator1.isHidden = true
-        menu.addItem(separator1)
         
         // Primed toggle
         let primedItem = NSMenuItem(title: "Remind me to Breathe", action: #selector(togglePrimed), keyEquivalent: "r")
         primedItem.target = self
-        primedItem.tag = 3
+        primedItem.tag = 2
         primedItem.state = appState.isPrimed ? .on : .off
+        primedItem.image = NSImage(systemSymbolName: "bell", accessibilityDescription: "Reminder")
         menu.addItem(primedItem)
         
+        let separator1 = NSMenuItem.separator()
+        separator1.tag = 3
+        menu.addItem(separator1)
+        
         // Settings
-        let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
+        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
         menu.addItem(settingsItem)
         
         // About
         let aboutItem = NSMenuItem(title: "About BreatheBar", action: #selector(showAbout), keyEquivalent: "")
         aboutItem.target = self
+        aboutItem.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: "About")
         menu.addItem(aboutItem)
         
         menu.addItem(NSMenuItem.separator())
@@ -62,12 +65,14 @@ final class StatusItemController {
         let testItem = NSMenuItem(title: "Test Animation", action: #selector(testAnimation), keyEquivalent: "t")
         testItem.target = self
         testItem.tag = 100
+        testItem.image = NSImage(systemSymbolName: "play.circle", accessibilityDescription: "Test")
         menu.addItem(testItem)
         #endif
         
         // Quit
         let quitItem = NSMenuItem(title: "Quit BreatheBar", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
+        quitItem.image = NSImage(systemSymbolName: "xmark.circle", accessibilityDescription: "Quit")
         menu.addItem(quitItem)
         
         statusItem?.menu = menu
