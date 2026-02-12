@@ -2,18 +2,34 @@ import SwiftUI
 
 @main
 struct BreatheBarApp: App {
-    @State private var appState = AppState()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-        MenuBarExtra {
-            MenuBarView(appState: appState)
-        } label: {
-            AnimatedIcon(isActive: appState.isBreathingTime)
-        }
-        .menuBarExtraStyle(.menu)
-        
         Settings {
-            SettingsView(appState: appState)
+            SettingsView(appState: appDelegate.appState)
+        }
+    }
+}
+
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    let appState = AppState()
+    var statusItemController: StatusItemController?
+    
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        statusItemController = StatusItemController(appState: appState)
+        setupObservation()
+    }
+    
+    private func setupObservation() {
+        withObservationTracking {
+            _ = appState.isBreathingTime
+            _ = appState.isPrimed
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.statusItemController?.update()
+                self?.setupObservation()
+            }
         }
     }
 }
