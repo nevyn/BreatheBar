@@ -49,6 +49,11 @@ final class StatusItemController {
         settingsItem.target = self
         menu.addItem(settingsItem)
         
+        // About
+        let aboutItem = NSMenuItem(title: "About BreatheBar", action: #selector(showAbout), keyEquivalent: "")
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+        
         menu.addItem(NSMenuItem.separator())
         
         #if DEBUG
@@ -239,6 +244,20 @@ final class StatusItemController {
     @objc private func openSettings() {
         NSApp.activate(ignoringOtherApps: true)
         NotificationCenter.default.post(name: .openBreatheBarSettings, object: nil)
+    }
+    
+    @objc private func showAbout() {
+        NSApp.activate(ignoringOtherApps: true)
+        let url = URL(string: "https://nevyn.dev/breathebar")!
+        let credits = NSMutableAttributedString(string: "Read more: ")
+        credits.append(NSAttributedString(string: "nevyn.dev/breathebar", attributes: [
+            .link: url,
+            .foregroundColor: NSColor.linkColor,
+        ]))
+        NSApp.orderFrontStandardAboutPanel(options: [
+            NSApplication.AboutPanelOptionKey.credits: credits,
+            NSApplication.AboutPanelOptionKey(rawValue: "Copyright"): "© 2026 Nevyn Bengtsson, hello@nevyn.dev",
+        ])
     }
     
     @objc private func testAnimation() {
