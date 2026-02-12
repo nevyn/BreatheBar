@@ -4,10 +4,12 @@ import SwiftUI
 @MainActor
 final class StatusItemController {
     private var statusItem: NSStatusItem?
+    private var menu: NSMenu?
     private var animationTimer: Timer?
     private var animationStartTime: Date?
     private let appState: AppState
     private let settingsWindowController: SettingsWindowController
+    private let breathingWindowController = BreathingWindowController()
     
     // Fixed icon size to prevent jumping
     private let iconSize: CGFloat = 22
@@ -16,6 +18,13 @@ final class StatusItemController {
         self.appState = appState
         self.settingsWindowController = SettingsWindowController(appState: appState)
         setupStatusItem()
+        
+        breathingWindowController.onDismiss = { [weak self] in
+            guard let self else { return }
+            self.statusItem?.button?.highlight(false)
+            self.appState.markDone()
+            self.update()
+        }
     }
     
     private func setupStatusItem() {
@@ -75,19 +84,17 @@ final class StatusItemController {
         quitItem.image = NSImage(systemSymbolName: "xmark.circle", accessibilityDescription: "Quit")
         menu.addItem(quitItem)
         
+        self.menu = menu
         statusItem?.menu = menu
     }
     
     func update() {
-        // Update menu items based on state
-        if let menu = statusItem?.menu {
+        // Update menu item state (tags: 1=done, 2=primed, 3=separator)
+        if let menu {
             if let doneItem = menu.item(withTag: 1) {
                 doneItem.isHidden = !appState.isBreathingTime
             }
-            if let separator = menu.item(withTag: 2) {
-                separator.isHidden = !appState.isBreathingTime
-            }
-            if let primedItem = menu.item(withTag: 3) {
+            if let primedItem = menu.item(withTag: 2) {
                 primedItem.state = appState.isPrimed ? .on : .off
             }
             #if DEBUG
@@ -95,6 +102,24 @@ final class StatusItemController {
                 testItem.title = appState.isBreathingTime ? "Stop Test Animation" : "Test Animation"
             }
             #endif
+        }
+        
+        // Swap between menu and breathing-window click handling
+        if appState.isBreathingTime {
+            // Remove the menu so clicks go to our action handler
+            statusItem?.menu = nil
+            statusItem?.button?.action = #selector(statusItemClicked)
+            statusItem?.button?.target = self
+        } else {
+            // Restore normal menu behavior
+            statusItem?.menu = menu
+            statusItem?.button?.action = nil
+            statusItem?.button?.target = nil
+            
+            // Dismiss breathing window if it's still showing
+            if breathingWindowController.isVisible {
+                breathingWindowController.dismiss()
+            }
         }
         
         // Handle animation state
@@ -237,6 +262,15 @@ final class StatusItemController {
     }
     
     // MARK: - Actions
+    
+    @objc private func statusItemClicked() {
+        if breathingWindowController.isVisible {
+            breathingWindowController.dismiss()
+        } else {
+            statusItem?.button?.highlight(true)
+            breathingWindowController.show(below: statusItem?.button)
+        }
+    }
     
     @objc private func doneClicked() {
         appState.markDone()
