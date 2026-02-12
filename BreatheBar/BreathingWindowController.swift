@@ -49,6 +49,7 @@ final class BreathingWindowController {
         panel.level = .floating
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.fullScreenAuxiliary, .transient]
+        panel.appearance = NSAppearance(named: .darkAqua)
 
         // Calculate final position below the status item, centered horizontally
         var finalOrigin: NSPoint
