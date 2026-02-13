@@ -1,7 +1,22 @@
 # BreatheBar
 
-App that sits in your menu bar and reminds you to take a break to breathe once an hour.
+Remember to breathe. As you're coding, or doing other computer work with intense focus the entire day, you are tensing your body and pushing your mind for a very long time.
 
-Instead of showing a window or a notification or alert, it just animates the icon until you dismiss it. That way you don't feel stressed to address it immediately if you're in the middle of something; but it's noticeable enough that you can _choose_ to take a break when you come out of deep focus.
+If you take a short break once an hour, and count breaths until that immediate stress leave your body, perhaps you won't be completely spent by the end of the day.
 
-Written mostly by a Claude Code agent; I just directed it a bit.
+![Gif of pulsating menu item](Images/menu.gif)
+
+Every other app I found was too intrusive. BreatheBar is more subtle: it sits in your menu bar, and it will just start pulsing its icon when it's time to breathe, once an hour. You can then _choose_ to acknowledge it when you come out of your deepest focus, instead of being interrupted by a notification or window.
+
+![Gif of the window that helps you breathe](Images/menu.gif)
+
+The breathing flower can guide you through deep inhales for as long as you need it. Try to count your breaths, up to 10 if you are very busy, 20 if you're feeling ambitious. If you lose the count because your mind wandered with stress or over-activeness, you have to start over from 1.
+
+Once you're able to count breaths to your goal, your jaw has unclenched, your shoulders have dropped, and the swirling stress in your mind has calmed, at least a bit.
+
+## About the app
+
+[Download the latest release](https://github.com/nevyn/BreatheBar/releases/latest) to get started.
+
+A mostly vibe coded app, by [Nevyn Bengtson](mailto:hello@nevyn.dev) and an unnamed Claude Code agent.
+
