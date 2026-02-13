@@ -31,7 +31,9 @@ final class AppState {
     
     func markDone() {
         isBreathingTime = false
-        isPrimed = true
+        // isPrimed stays false -- the scheduler will re-prime
+        // when the breathing window passes (:00), preventing
+        // re-triggers within the same 5-minute period.
     }
     
     func togglePrimed() {
@@ -57,22 +59,16 @@ final class AppState {
     
     private func checkBreathingTime() {
         let now = Date()
-        
-        // If we're not primed, don't trigger
-        guard isPrimed else {
-            return
-        }
-        
-        // Check if it's breathing time based on settings
         let shouldBeBreathingTime = settings.isBreathingTime(date: now)
         
-        if shouldBeBreathingTime && !isBreathingTime {
-            // Entering breathing time
+        if isPrimed && shouldBeBreathingTime && !isBreathingTime {
+            // Enter breathing time
             isBreathingTime = true
-            isPrimed = false  // Will be re-primed when user clicks "Done"
-        } else if !shouldBeBreathingTime && isBreathingTime {
-            // If we passed the hour and user didn't acknowledge, auto-reset
-            // This handles the case where user ignores the reminder
+            isPrimed = false
+        } else if !isPrimed && !shouldBeBreathingTime {
+            // Breathing window has passed -- re-prime for next hour.
+            // Also auto-resets if user ignored the reminder (isBreathingTime
+            // was still true when the window elapsed).
             isBreathingTime = false
             isPrimed = true
         }
