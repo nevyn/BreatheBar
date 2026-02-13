@@ -10,22 +10,9 @@
 		AA000001000000000000000A /* BreatheBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BreatheBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		AA000001000000000000000B /* Exceptions for "BreatheBar" folder in "BreatheBar" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = AA000001000000000000000C /* BreatheBar */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AA000001000000000000000D /* BreatheBar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				AA000001000000000000000B /* Exceptions for "BreatheBar" folder in "BreatheBar" target */,
-			);
 			path = BreatheBar;
 			sourceTree = "<group>";
 		};
