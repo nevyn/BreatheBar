@@ -8,7 +8,7 @@ If you take a short break once an hour, and count breaths until that immediate s
 
 Every other app I found was too intrusive. BreatheBar is more subtle: it sits in your menu bar, and it will just start pulsing its icon when it's time to breathe, once an hour. You can then _choose_ to acknowledge it when you come out of your deepest focus, instead of being interrupted by a notification or window.
 
-![Gif of the window that helps you breathe](Images/menu.gif)
+![Gif of the window that helps you breathe](Images/window.gif)
 
 The breathing flower can guide you through deep inhales for as long as you need it. Try to count your breaths, up to 10 if you are very busy, 20 if you're feeling ambitious. If you lose the count because your mind wandered with stress or over-activeness, you have to start over from 1.
 
