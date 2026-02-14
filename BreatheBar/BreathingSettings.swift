@@ -11,13 +11,14 @@ struct BreathingSettings: Codable, Equatable {
     var breathingCadence: Double = 5.0
     
     enum Weekday: Int, Codable, CaseIterable, Identifiable {
-        case monday = 1
-        case tuesday = 2
-        case wednesday = 3
-        case thursday = 4
-        case friday = 5
-        case saturday = 6
-        case sunday = 7
+        case sunday = 1
+        case monday = 2
+        case tuesday = 3
+        case wednesday = 4
+        case thursday = 5
+        case friday = 6
+        case saturday = 7
+        
         
         var id: Int { rawValue }
         
@@ -71,10 +72,6 @@ struct BreathingSettings: Codable, Equatable {
     }
     
     func isBreathingTime(date: Date = Date()) -> Bool {
-        guard isWithinWorkHours(date: date) else {
-            return false
-        }
-        
         let calendar = Calendar.current
         let minute = calendar.component(.minute, from: date)
         
