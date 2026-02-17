@@ -60,6 +60,15 @@ jobs:
             CODE_SIGN_IDENTITY="Developer ID Application: Nevyn Bengtsson (M4Q2TE45WT)" \
             DEVELOPMENT_TEAM=M4Q2TE45WT
 
+      - name: Verify code signature
+        run: |
+          echo "--- Signature info ---"
+          codesign -dvv build/Build/Products/Release/BreatheBar.app
+          echo ""
+          echo "--- Signature verification ---"
+          codesign --verify --deep --strict --verbose=2 \
+            build/Build/Products/Release/BreatheBar.app
+
       - name: Create zip
         run: |
           ditto -c -k --keepParent \
@@ -72,11 +81,29 @@ jobs:
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: M4Q2TE45WT
         run: |
-          xcrun notarytool submit "BreatheBar_${VERSION}.zip" \
+          SUBMIT_OUTPUT=$(xcrun notarytool submit "BreatheBar_${VERSION}.zip" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_ID_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
-            --wait
+            --wait \
+            --output-format json)
+
+          echo "$SUBMIT_OUTPUT"
+
+          STATUS=$(echo "$SUBMIT_OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+          SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+
+          if [ "$STATUS" != "Accepted" ]; then
+            echo ""
+            echo "::error::Notarization failed with status: $STATUS"
+            echo ""
+            echo "--- Notarization log ---"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_ID_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" || true
+            exit 1
+          fi
 
           xcrun stapler staple \
             build/Build/Products/Release/BreatheBar.app
