@@ -154,40 +154,54 @@ final class StatusItemController {
     }
     
     private func makeIcon(animated: Bool) -> NSImage {
-        // Calculate animation values
         var rotation: CGFloat = 0
         var scaleAmount: CGFloat = 1.0
-        var colorAmount: CGFloat = 0  // 0 = template/grayscale, 1 = full green
+        var tintColor: NSColor? = nil
         
         if animated, let startTime = animationStartTime {
             let elapsed = Date().timeIntervalSince(startTime)
-            
-            // Smooth sine-based animation
-            rotation = 10 * sin(elapsed * 2.5)
-            scaleAmount = 1.0 + 0.12 * sin(elapsed * 3.0 + 0.5)
-            
-            // Color: fade in over first 0.8s, then pulse subtly
             let fadeIn = min(1.0, elapsed / 0.8)
-            let colorPulse = 0.85 + 0.15 * sin(elapsed * 2.0)
-            colorAmount = fadeIn * colorPulse
+            
+            // Burst-rest jiggle: 2-3 quick shakes every 2 seconds
+            let period = 2.0
+            let cycle = elapsed.truncatingRemainder(dividingBy: period)
+            let burstDuration = 0.5
+            
+            var colorAmount: CGFloat = 0
+            
+            if cycle < burstDuration {
+                let damping = 1.0 - cycle / burstDuration
+                rotation = 25 * damping * sin(cycle * 30)
+                scaleAmount = 1.0 + 0.15 * damping * abs(sin(cycle * 30))
+                colorAmount = fadeIn
+            } else {
+                rotation = 0
+                scaleAmount = 1.0
+                let restT = (cycle - burstDuration) / (period - burstDuration)
+                colorAmount = fadeIn * max(0.0, 1.0 - restT)
+            }
+            
+            // When fully faded, leave tintColor nil so the icon returns to template mode
+            if colorAmount > 0.01 {
+                let cycleIndex = Int(elapsed / period)
+                let hue = CGFloat((cycleIndex * 137) % 360) / 360.0
+                tintColor = NSColor(calibratedHue: hue, saturation: 0.7, brightness: 0.85, alpha: colorAmount)
+            }
         }
         
-        // Use drawing handler which automatically handles retina
         let image = NSImage(size: NSSize(width: iconSize, height: iconSize), flipped: false) { [self] rect in
-            self.drawIcon(in: rect, rotation: rotation, scale: scaleAmount, colorAmount: colorAmount)
+            self.drawIcon(in: rect, rotation: rotation, scale: scaleAmount, tintColor: tintColor)
             return true
         }
         
-        // Only use template mode when fully grayscale
-        image.isTemplate = (colorAmount == 0)
+        image.isTemplate = (tintColor == nil)
         
         return image
     }
     
-    private func drawIcon(in rect: NSRect, rotation: CGFloat, scale: CGFloat, colorAmount: CGFloat) {
+    private func drawIcon(in rect: NSRect, rotation: CGFloat, scale: CGFloat, tintColor: NSColor?) {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
         
-        // Get the SF Symbol
         let config = NSImage.SymbolConfiguration(pointSize: 15, weight: .medium)
         guard let symbolImage = NSImage(systemSymbolName: "leaf.fill", accessibilityDescription: "BreatheBar")?
             .withSymbolConfiguration(config) else { return }
@@ -196,7 +210,6 @@ final class StatusItemController {
         let centerX = rect.midX
         let centerY = rect.midY
         
-        // Calculate draw rect (centered)
         let drawRect = NSRect(
             x: centerX - symbolSize.width / 2,
             y: centerY - symbolSize.height / 2,
@@ -206,43 +219,27 @@ final class StatusItemController {
         
         context.saveGState()
         
-        // Apply transforms around center
         context.translateBy(x: centerX, y: centerY)
         context.rotate(by: rotation * .pi / 180)
         context.scaleBy(x: scale, y: scale)
         context.translateBy(x: -centerX, y: -centerY)
         
-        if colorAmount > 0 {
-            // Detect menu bar appearance - check if we're in dark mode
-            let menuBarColor = menuBarIconColor()
+        if let tintColor, tintColor.alphaComponent > 0 {
+            let colorAmount = tintColor.alphaComponent
             
-            // Draw grayscale version first (matching menu bar appearance)
+            // Neutral gray underlay — works on both light and dark menu bars
             if colorAmount < 1.0 {
-                let grayColor = menuBarColor.withAlphaComponent(1.0 - colorAmount)
+                let grayColor = NSColor(white: 0.55, alpha: 1.0 - colorAmount)
                 drawTintedSymbol(symbolImage, in: drawRect, tint: grayColor)
             }
             
-            // Draw green version on top
-            let greenColor = NSColor(calibratedRed: 0.3, green: 0.75, blue: 0.4, alpha: colorAmount)
-            drawTintedSymbol(symbolImage, in: drawRect, tint: greenColor)
+            drawTintedSymbol(symbolImage, in: drawRect, tint: tintColor)
         } else {
-            // Fully grayscale - draw in menu bar color (template mode will override anyway)
-            drawTintedSymbol(symbolImage, in: drawRect, tint: menuBarIconColor())
+            // Grayscale fallback (template mode handles the actual tinting)
+            drawTintedSymbol(symbolImage, in: drawRect, tint: NSColor(white: 0.55, alpha: 1.0))
         }
         
         context.restoreGState()
-    }
-    
-    private func menuBarIconColor() -> NSColor {
-        // Check the effective appearance of the status bar button
-        if let button = statusItem?.button {
-            let appearance = button.effectiveAppearance
-            let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            return isDark ? .white : .black
-        }
-        // Fallback: check system appearance
-        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        return isDark ? .white : .black
     }
     
     private func drawTintedSymbol(_ symbol: NSImage, in rect: NSRect, tint: NSColor) {
