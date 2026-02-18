@@ -185,53 +185,109 @@ struct PetalFlowerView: View {
 /// The guided breathing UI shown as a floating panel.
 struct BreathingSessionView: View {
     let startDate: Date
-    /// Duration of one inhale (or exhale) in seconds.
-    let cadence: Double
     let onDone: () -> Void
+    let onCadenceChanged: ((Double) -> Void)?
+
+    /// Duration of one inhale (or exhale) in seconds — mutable so the in-session slider can adjust it.
+    @State private var cadence: Double
+    @State private var isHovering = false
+    @State private var isDragging = false
+
+    init(startDate: Date, cadence: Double, onDone: @escaping () -> Void, onCadenceChanged: ((Double) -> Void)? = nil) {
+        self.startDate = startDate
+        self.onDone = onDone
+        self.onCadenceChanged = onCadenceChanged
+        self._cadence = State(initialValue: cadence)
+    }
 
     /// Full breathing cycle = inhale + exhale.
     private var cycleLength: Double { cadence * 2.0 }
 
+    private var cadenceLabel: String {
+        String(format: "Pace: %.1fs", cadence)
+    }
+
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let elapsed = timeline.date.timeIntervalSince(startDate)
+        VStack(spacing: 0) {
+            TimelineView(.animation) { timeline in
+                let elapsed = timeline.date.timeIntervalSince(startDate)
 
-            // -cos starts at -1 (contracted), rises to +1 (expanded)
-            let breathPhase = -cos(elapsed * .pi * 2.0 / cycleLength)
-            let expansion = breathPhase * 0.5 + 0.5
-            // Text opacity: fade through zero at phase transitions
-            let s = sin(elapsed * .pi * 2.0 / cycleLength)
-            let inhaleOpacity = max(0, min(1, (s - 0.15) * 5.0))
-            let exhaleOpacity = max(0, min(1, (-s - 0.15) * 5.0))
+                // -cos starts at -1 (contracted), rises to +1 (expanded)
+                let breathPhase = -cos(elapsed * .pi * 2.0 / cycleLength)
+                let expansion = breathPhase * 0.5 + 0.5
+                // Text opacity: fade through zero at phase transitions
+                let s = sin(elapsed * .pi * 2.0 / cycleLength)
+                let inhaleOpacity = max(0, min(1, (s - 0.15) * 5.0))
+                let exhaleOpacity = max(0, min(1, (-s - 0.15) * 5.0))
 
-            VStack(spacing: 16) {
-                ZStack {
-                    Text("Breathe in…")
-                        .opacity(inhaleOpacity)
-                    Text("Breathe out…")
-                        .opacity(exhaleOpacity)
+                VStack(spacing: 16) {
+                    ZStack {
+                        Text("Breathe in…")
+                            .opacity(inhaleOpacity)
+                        Text("Breathe out…")
+                            .opacity(exhaleOpacity)
+                    }
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .frame(height: 20)
+
+                    PetalFlowerView(expansion: expansion, elapsed: elapsed, cycleLength: cycleLength)
+                        .frame(width: 160, height: 160)
+
+                    Button(action: onDone) {
+                        Text("Done breathing")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(red: 0.40, green: 0.72, blue: 0.55))
                 }
-                .font(.system(size: 15, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
-                .frame(height: 20)
+                .padding(.horizontal, 30)
+                .padding(.top, 32)  // 12pt arrow + 20pt visual padding
+                .padding(.bottom, 16)
+            }
 
-                PetalFlowerView(expansion: expansion, elapsed: elapsed, cycleLength: cycleLength)
-                    .frame(width: 160, height: 160)
+            // Tempo slider — always in the layout (keeps window size stable),
+            // fades in only when the mouse is over the window.
+            HStack(spacing: 6) {
+                Image(systemName: "hare")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                Slider(value: $cadence, in: 2...10, step: 0.5, onEditingChanged: { isDragging = $0 })
+                    .overlay {
+                        GeometryReader { geo in
+                            let fraction = (cadence - 2.0) / (10.0 - 2.0)
+                            let thumbR: CGFloat = 8.5
+                            let thumbCenterX = thumbR + fraction * (geo.size.width - thumbR * 2)
 
-                Button(action: onDone) {
-                    Text("Done breathing")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color(red: 0.40, green: 0.72, blue: 0.55))
+                            Text(cadenceLabel)
+                                .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(.regularMaterial, in: Capsule())
+                                .fixedSize()
+                                .position(x: thumbCenterX, y: geo.size.height / 2)
+                                .offset(y: -24)
+                                .opacity(isDragging ? 1 : 0)
+                                .animation(.easeInOut(duration: 0.15), value: isDragging)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                Image(systemName: "tortoise")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 30)
-            .padding(.top, 32)  // 12pt arrow + 20pt visual padding
             .padding(.bottom, 20)
+            .opacity(isHovering ? 0.6 : 0.01)
+            .animation(.easeInOut(duration: 0.25), value: isHovering)
         }
         .frame(width: 250)
         .background(.ultraThinMaterial, in: PopoverShape())
+        .onHover { isHovering = $0 }
+        .onChange(of: cadence) { _, newValue in
+            onCadenceChanged?(newValue)
+        }
     }
 }

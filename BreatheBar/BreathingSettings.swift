@@ -8,7 +8,7 @@ struct BreathingSettings: Codable, Equatable {
     var workDays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
     var launchAtLogin: Bool = false
     /// Duration of one inhale (or exhale) in seconds. Full cycle = cadence × 2.
-    var breathingCadence: Double = 5.0
+    var breathingCadence: Double = 4.0
     
     enum Weekday: Int, Codable, CaseIterable, Identifiable {
         case sunday = 1

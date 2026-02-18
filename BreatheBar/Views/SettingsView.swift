@@ -43,7 +43,7 @@ struct SettingsView: View {
             Section("Breathing") {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Pace: \(Int(appState.settings.breathingCadence))s in, \(Int(appState.settings.breathingCadence))s out")
-                    Slider(value: $appState.settings.breathingCadence, in: 3...10, step: 1) {
+                    Slider(value: $appState.settings.breathingCadence, in: 2...10, step: 0.5) {
                         Text("Breathing Pace")
                     }
                 }

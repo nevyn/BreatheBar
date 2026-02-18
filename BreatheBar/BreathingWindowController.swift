@@ -17,7 +17,7 @@ final class BreathingWindowController {
 
     // MARK: - Show
 
-    func show(below statusItemButton: NSStatusBarButton?, cadence: Double) {
+    func show(below statusItemButton: NSStatusBarButton?, cadence: Double, onCadenceChanged: ((Double) -> Void)? = nil) {
         // Clean up any leftover panel (creates fresh animation each time)
         if let existing = panel {
             existing.orderOut(nil)
@@ -27,11 +27,11 @@ final class BreathingWindowController {
         isDismissing = false
 
         // Build the SwiftUI view with a fresh start time
-        let breathingView = BreathingSessionView(startDate: Date(), cadence: cadence) { [weak self] in
+        let breathingView = BreathingSessionView(startDate: Date(), cadence: cadence, onDone: { [weak self] in
             Task { @MainActor [weak self] in
                 self?.dismiss()
             }
-        }
+        }, onCadenceChanged: onCadenceChanged)
         let hostingView = NSHostingView(rootView: breathingView)
         let size = hostingView.fittingSize
 
