@@ -45,7 +45,14 @@ Automated via `.github/workflows/release.yml` on GitHub Release publish. Require
 | `NOTARIZATION_PASSWORD` | App-specific password |
 | `NOTARIZATION_TEAM_ID` | `M4Q2TE45WT` |
 
-To cut a release: bump `MARKETING_VERSION` in `project.pbxproj`, commit, push, create a GitHub Release with a `v`-prefixed tag. The workflow handles signing, notarization, stapling, and attaching the ZIP.
+To cut a release, run the helper script from the repo root (must be on `main` with a clean working tree):
+
+```
+./release.sh minor   # 1.3 → 1.4
+./release.sh major   # 1.3 → 2.0
+```
+
+It bumps `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.pbxproj`, commits, pushes, and creates a GitHub Release with a `v`-prefixed tag. The workflow handles signing, notarization, stapling, and attaching the ZIP.
 
 ---
 
