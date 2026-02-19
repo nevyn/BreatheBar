@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import ServiceManagement
+import HealthKit
 
 @Observable
 @MainActor
@@ -23,6 +24,8 @@ final class AppState {
         }
     }
     
+    let healthKitManager = HealthKitManager()
+
     private var timer: Timer?
     
     init() {
@@ -38,9 +41,27 @@ final class AppState {
     
     // MARK: - Actions
     
-    func markDone() {
+    /// Call when the user finishes a breathing session.
+    /// Pass real start/end dates from the breathing window to enable HealthKit logging;
+    /// the default Date() args produce a zero-duration session that safely skips logging.
+    func markDone(sessionStart: Date = Date(), sessionEnd: Date = Date()) {
         print("Done breathing.")
         isBreathingTime = false
+
+        let duration = sessionEnd.timeIntervalSince(sessionStart)
+        guard settings.logToHealth, duration >= 60 else { return }
+        Task { await healthKitManager.logMindfulSession(start: sessionStart, end: sessionEnd) }
+    }
+
+    /// Requests HealthKit write authorization when logToHealth is enabled.
+    /// Silently disables the setting if HealthKit is unavailable on this device.
+    func requestHealthKitAuthorizationIfNeeded() async {
+        guard settings.logToHealth else { return }
+        guard healthKitManager.isAvailable else {
+            settings.logToHealth = false
+            return
+        }
+        _ = await healthKitManager.requestAuthorization()
     }
     
     func togglePrimed() {

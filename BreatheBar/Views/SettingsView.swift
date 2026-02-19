@@ -52,6 +52,18 @@ struct SettingsView: View {
             Section("Startup") {
                 Toggle("Launch at Login", isOn: $appState.settings.launchAtLogin)
             }
+
+            Section("Health") {
+                Toggle("Log to Apple Health", isOn: $appState.settings.logToHealth)
+                    .onChange(of: appState.settings.logToHealth) { _, newValue in
+                        if newValue {
+                            Task { await appState.requestHealthKitAuthorizationIfNeeded() }
+                        }
+                    }
+                Text("Sessions over 60 seconds are logged as Mindfulness to Apple Health.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .frame(width: 400)

@@ -23,6 +23,10 @@ final class StatusItemController {
             guard let self else { return }
             self.statusItem?.button?.highlight(false)
         }
+
+        breathingWindowController.onSessionDone = { [weak self] sessionStart in
+            self?.appState.markDone(sessionStart: sessionStart, sessionEnd: Date())
+        }
     }
     
     private func setupStatusItem() {

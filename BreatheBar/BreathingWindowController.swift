@@ -11,6 +11,10 @@ final class BreathingWindowController {
     /// Called after the window finishes dismissing (fade-out complete).
     var onDismiss: (() -> Void)?
 
+    /// Called when the user taps "Done breathing". Receives the session start date
+    /// so the caller can compute duration for HealthKit logging.
+    var onSessionDone: ((Date) -> Void)?
+
     var isVisible: Bool {
         panel?.isVisible ?? false
     }
@@ -27,9 +31,12 @@ final class BreathingWindowController {
         isDismissing = false
 
         // Build the SwiftUI view with a fresh start time
-        let breathingView = BreathingSessionView(startDate: Date(), cadence: cadence, onDone: { [weak self] in
+        let sessionStart = Date()
+        let breathingView = BreathingSessionView(startDate: sessionStart, cadence: cadence, onDone: { [weak self] in
             Task { @MainActor [weak self] in
-                self?.dismiss()
+                guard let self else { return }
+                self.onSessionDone?(sessionStart)
+                self.dismiss()
             }
         }, onCadenceChanged: onCadenceChanged)
         let hostingView = NSHostingView(rootView: breathingView)
