@@ -9,6 +9,10 @@ struct BreathingSettings: Codable, Equatable {
     var launchAtLogin: Bool = false
     /// Duration of one inhale (or exhale) in seconds. Full cycle = cadence × 2.
     var breathingCadence: Double = 4.0
+    /// Whether to log completed breathing sessions (≥60s) to Apple Health as mindfulness minutes.
+    var logToHealth: Bool = false
+    /// Set to true once the user has seen and dismissed the first-launch onboarding window.
+    var hasCompletedOnboarding: Bool = false
     
     enum Weekday: Int, Codable, CaseIterable, Identifiable {
         case sunday = 1
