@@ -3,20 +3,41 @@
 # The release triggers CI which builds, signs, notarizes, and attaches the zip.
 #
 # Usage:
-#   ./release.sh minor    # 1.3 → 1.4  (default)
-#   ./release.sh major    # 1.3 → 2.0
+#   ./release.sh [minor|major] [--dry-run]
+#
+#   --dry-run  Print every step (including Claude-generated notes) without
+#              touching the pbxproj, git, or GitHub.
 
 set -euo pipefail
 
-BUMP="${1:-minor}"
+# ── Parse args (order-independent) ───────────────────────────────────────────
+
+BUMP="minor"
+DRY_RUN=false
+
+for arg in "$@"; do
+    case "$arg" in
+        minor|major) BUMP="$arg" ;;
+        --dry-run)   DRY_RUN=true ;;
+        *) echo "error: unknown argument '$arg'" >&2; exit 1 ;;
+    esac
+done
+
 PBXPROJ="BreatheBar.xcodeproj/project.pbxproj"
 
-# ── Sanity checks ────────────────────────────────────────────────────────────
+# Helper: in dry-run mode, print the command instead of running it.
+maybe() {
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "  [dry run] $*"
+    else
+        "$@"
+    fi
+}
 
-if [[ "$BUMP" != "major" && "$BUMP" != "minor" ]]; then
-    echo "error: argument must be 'major' or 'minor'" >&2
-    exit 1
-fi
+[[ "$DRY_RUN" == true ]] && echo "*** DRY RUN — nothing will be written or pushed ***"
+echo ""
+
+# ── Sanity checks ────────────────────────────────────────────────────────────
 
 if ! command -v gh &>/dev/null; then
     echo "error: 'gh' CLI not found — install it with: brew install gh" >&2
@@ -54,37 +75,95 @@ fi
 
 NEW_VERSION="${MAJOR}.${MINOR}"
 
-echo "Bumping: $CURRENT_VERSION → $NEW_VERSION"
+echo "Version:  $CURRENT_VERSION → $NEW_VERSION"
+echo ""
 
 # ── Update pbxproj ────────────────────────────────────────────────────────────
 # Escape dots so sed treats them as literals, not wildcards.
 
 ESC_VER="$(echo "$CURRENT_VERSION" | sed 's/\./\\./g')"
 
-sed -i '' \
-    "s/MARKETING_VERSION = ${ESC_VER};/MARKETING_VERSION = ${NEW_VERSION};/g" \
-    "$PBXPROJ"
+if [[ "$DRY_RUN" == true ]]; then
+    echo "  [dry run] sed: MARKETING_VERSION = ${CURRENT_VERSION} → ${NEW_VERSION} in $PBXPROJ"
+else
+    sed -i '' \
+        "s/MARKETING_VERSION = ${ESC_VER};/MARKETING_VERSION = ${NEW_VERSION};/g" \
+        "$PBXPROJ"
 
-# Verify the field was actually updated
-CHECK_VER="$(grep -m1 'MARKETING_VERSION' "$PBXPROJ" \
-    | sed 's/.*MARKETING_VERSION = \(.*\);.*/\1/' | tr -d '\t ')"
-
-if [[ "$CHECK_VER" != "$NEW_VERSION" ]]; then
-    echo "error: pbxproj update failed — check the file manually" >&2
-    exit 1
+    CHECK_VER="$(grep -m1 'MARKETING_VERSION' "$PBXPROJ" \
+        | sed 's/.*MARKETING_VERSION = \(.*\);.*/\1/' | tr -d '\t ')"
+    if [[ "$CHECK_VER" != "$NEW_VERSION" ]]; then
+        echo "error: pbxproj update failed — check the file manually" >&2
+        exit 1
+    fi
 fi
 
 # ── Commit & push ─────────────────────────────────────────────────────────────
 
-git add "$PBXPROJ"
-git commit -m "Bump version to $NEW_VERSION"
-git push
+maybe git add "$PBXPROJ"
+maybe git commit -m "Bump version to $NEW_VERSION"
+maybe git push
+
+# ── Generate release notes with Claude ───────────────────────────────────────
+
+echo ""
+LAST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+
+RELEASE_FLAGS=(--title "v${NEW_VERSION}")
+
+if command -v claude &>/dev/null && [[ -n "$LAST_TAG" ]]; then
+    echo "Generating release notes with Claude (changes since $LAST_TAG)…"
+    echo ""
+
+    # Feed Claude both the commit log and the Swift diff so it has full context
+    # even when commit messages are terse.
+    COMMIT_LOG="$(git log "${LAST_TAG}..HEAD" --format='%s%n%b' -- 2>/dev/null || true)"
+    SWIFT_DIFF="$(git diff "${LAST_TAG}..HEAD" -- '*.swift' 2>/dev/null || true)"
+
+    NOTES="$(cat <<EOF | claude -p --output-format text 2>/dev/null || true
+You are writing release notes for BreatheBar, a minimal macOS menu bar breathing reminder app.
+Below are the git commits and Swift code changes since the last release (v${CURRENT_VERSION}).
+Write a short, friendly release notes body (2–5 bullet points) describing user-facing changes.
+Omit version-bump commits and internal/CI plumbing. Use plain markdown bullet points, no header.
+You are running non-interactive, so go ahead and decide on your own if you become undecisive
+about anything. 
+
+Your response is directly piped to the gh tool, so IT IS VERY IMPORTANT that you do not say
+any commentary, notes or disclaimers. ONLY say the bullet points for the release notes in
+response to this prompt.
+
+## Commits
+${COMMIT_LOG}
+
+## Swift diff
+${SWIFT_DIFF}
+EOF
+)"
+
+    if [[ -n "$NOTES" ]]; then
+        echo "$NOTES"
+        echo ""
+        RELEASE_FLAGS+=(--notes "$NOTES")
+    else
+        echo "Claude returned nothing — falling back to auto-generated notes."
+        RELEASE_FLAGS+=(--generate-notes)
+    fi
+else
+    if ! command -v claude &>/dev/null; then
+        echo "'claude' CLI not found — falling back to auto-generated notes."
+    elif [[ -z "$LAST_TAG" ]]; then
+        echo "No previous tag found — falling back to auto-generated notes."
+    fi
+    RELEASE_FLAGS+=(--generate-notes)
+fi
 
 # ── Create GitHub release (triggers CI) ──────────────────────────────────────
 
-gh release create "v${NEW_VERSION}" \
-    --title "v${NEW_VERSION}" \
-    --generate-notes
+maybe gh release create "v${NEW_VERSION}" "${RELEASE_FLAGS[@]}"
 
 echo ""
-echo "✓ Released v${NEW_VERSION} — CI is building, signing, and notarizing."
+if [[ "$DRY_RUN" == true ]]; then
+    echo "*** Dry run complete — no changes made. ***"
+else
+    echo "✓ Released v${NEW_VERSION} — CI is building, signing, and notarizing."
+fi
