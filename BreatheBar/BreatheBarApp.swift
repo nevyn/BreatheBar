@@ -15,9 +15,12 @@ struct BreatheBarApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
     private var statusItemController: StatusItemController?
+    private var onboardingWindowController: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItemController = StatusItemController(appState: appState)
+        onboardingWindowController = OnboardingWindowController(appState: appState)
+        onboardingWindowController?.showIfNeeded()
         setupObservation()
     }
 
