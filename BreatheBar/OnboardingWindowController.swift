@@ -51,7 +51,6 @@ final class OnboardingWindowController: NSObject, NSWindowDelegate {
     // MARK: - Private
 
     private func complete() {
-        guard !appState.settings.hasCompletedOnboarding else { return }
         appState.settings.hasCompletedOnboarding = true  // auto-saves via settings.didSet
         let w = window
         window = nil      // nil first so windowWillClose re-entry is a no-op
