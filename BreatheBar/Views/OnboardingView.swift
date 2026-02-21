@@ -87,7 +87,7 @@ struct OnboardingView: View {
                 Text("Remember to breathe. As you're coding, or doing other computer work with intense focus the entire day, you are tensing your body and pushing your mind for a very long time.")
                 Text("Once an hour, the leaf in your menu bar will gently grab your attention. Notice it, get to it when you're ready to leave focus, and click it. The breathing flower can guide you through deep inhales for as long as you need it.")
                 Text("Try to count your breaths, up to 10 if you are very busy, 20 if you're feeling ambitious. If you lose the count because your mind wandered with stress or over-activeness, start over from 1.")
-                Text("Once you're able to count breaths to your goal, your jaw has unclenched, your shoulders have dropped, and the swirling stress in your mind has calmed, at least a bit.")
+                Text("Once you're able to count breaths to your goal, your jaw has unclenched, your shoulders have dropped, and the swirling stress in your mind has calmed a bit. Perhaps now, you'll have energy after work, too?")
             }
                 .font(.body)
                 .foregroundStyle(.secondary)
