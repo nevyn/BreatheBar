@@ -25,6 +25,16 @@ struct BreathingSettings: Codable, Equatable {
         
         
         var id: Int { rawValue }
+
+        /// Days ordered by the user's locale (e.g. Monday-first in most of Europe, Sunday-first in the US).
+        static var localeOrdered: [Weekday] {
+            let first = Calendar.current.firstWeekday  // 1 = Sunday, 2 = Monday, ...
+            return allCases.sorted { a, b in
+                let aIdx = (a.rawValue - first + 7) % 7
+                let bIdx = (b.rawValue - first + 7) % 7
+                return aIdx < bIdx
+            }
+        }
         
         var shortName: String {
             switch self {

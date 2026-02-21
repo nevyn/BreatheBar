@@ -8,7 +8,7 @@ struct SettingsView: View {
         Form {
             Section("Work Days") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 8) {
-                    ForEach(BreathingSettings.Weekday.allCases) { day in
+                    ForEach(BreathingSettings.Weekday.localeOrdered, id: \.self) { day in
                         Toggle(day.shortName, isOn: Binding(
                             get: { appState.settings.workDays.contains(day) },
                             set: { isOn in
