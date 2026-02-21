@@ -75,10 +75,15 @@ final class StatusItemController {
         aboutItem.target = self
         aboutItem.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: "About")
         menu.addItem(aboutItem)
-        
+
+        #if DEBUG
         menu.addItem(NSMenuItem.separator())
         
-        #if DEBUG
+        let onboardingItem = NSMenuItem(title: "Onboarding…", action: #selector(openOnboarding), keyEquivalent: "o")
+        onboardingItem.target = self
+        onboardingItem.image = NSImage(systemSymbolName: "airplane.arrival", accessibilityDescription: "Onboarding")
+        menu.addItem(onboardingItem)
+
         let testItem = NSMenuItem(title: "Test Animation", action: #selector(testAnimation), keyEquivalent: "t")
         testItem.target = self
         testItem.tag = 100
@@ -86,6 +91,8 @@ final class StatusItemController {
         menu.addItem(testItem)
         #endif
         
+        menu.addItem(NSMenuItem.separator())
+
         // Quit
         let quitItem = NSMenuItem(title: "Quit BreatheBar", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
@@ -298,6 +305,12 @@ final class StatusItemController {
         appState.togglePrimed()
         update()
     }
+    
+    @objc private func openOnboarding() {
+        let onboardingWindowController = OnboardingWindowController(appState: appState)
+        onboardingWindowController.show()
+    }
+
     
     @objc private func openSettings() {
         settingsWindowController.showSettings()

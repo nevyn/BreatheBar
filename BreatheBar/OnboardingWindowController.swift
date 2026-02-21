@@ -19,7 +19,10 @@ final class OnboardingWindowController: NSObject, NSWindowDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-
+        show()
+    }
+    func show()
+    {
         let view = OnboardingView(appState: appState) { [weak self] in
             self?.complete()
         }
