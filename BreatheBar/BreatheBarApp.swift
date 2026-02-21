@@ -18,9 +18,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingWindowController: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        statusItemController = StatusItemController(appState: appState)
-        onboardingWindowController = OnboardingWindowController(appState: appState)
-        onboardingWindowController?.showIfNeeded()
+        let onboarding = OnboardingWindowController(appState: appState)
+        onboardingWindowController = onboarding
+        statusItemController = StatusItemController(appState: appState, onboardingWindowController: onboarding)
+        onboarding.showIfNeeded()
         setupObservation()
     }
 

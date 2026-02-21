@@ -10,13 +10,15 @@ final class StatusItemController {
     private let appState: AppState
     private let settingsWindowController: SettingsWindowController
     private let breathingWindowController = BreathingWindowController()
-    
+    private let onboardingWindowController: OnboardingWindowController
+
     // Fixed icon size to prevent jumping
     private let iconSize: CGFloat = 22
-    
-    init(appState: AppState) {
+
+    init(appState: AppState, onboardingWindowController: OnboardingWindowController) {
         self.appState = appState
         self.settingsWindowController = SettingsWindowController(appState: appState)
+        self.onboardingWindowController = onboardingWindowController
         setupStatusItem()
         
         breathingWindowController.onDismiss = { [weak self] in
@@ -307,7 +309,6 @@ final class StatusItemController {
     }
     
     @objc private func openOnboarding() {
-        let onboardingWindowController = OnboardingWindowController(appState: appState)
         onboardingWindowController.show()
     }
 
