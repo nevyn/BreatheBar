@@ -5,90 +5,76 @@ struct OnboardingView: View {
     /// Called when the user clicks "Get Started" or closes the window.
     let onComplete: () -> Void
 
+    @State private var page = 0
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-
-            // MARK: - Header
-            HStack(alignment: .top, spacing: 14) {
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.green)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Welcome to BreatheBar")
-                        .font(.title2.bold())
-                    Text("BreatheBar sits quietly in your menu bar and pulses its icon once an hour to remind you to take a short breathing break. No notifications, no interruptions — just a subtle nudge when you're ready.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+        VStack(spacing: 0) {
+            Group {
+                switch page {
+                case 0: welcomePage
+                default: settingsPage
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .padding(.bottom, 20)
-
-            Divider()
-
-            // MARK: - Setup form (reuses SettingsView's TimePicker)
-            Form {
-                Section("Work Days") {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 8) {
-                        ForEach(BreathingSettings.Weekday.allCases) { day in
-                            Toggle(day.shortName, isOn: Binding(
-                                get: { appState.settings.workDays.contains(day) },
-                                set: { isOn in
-                                    if isOn { appState.settings.workDays.insert(day) }
-                                    else { appState.settings.workDays.remove(day) }
-                                }
-                            ))
-                            .toggleStyle(.button)
-                        }
-                    }
-                }
-
-                Section("Work Hours") {
-                    HStack {
-                        Text("Start")
-                        Spacer()
-                        TimePicker(hour: $appState.settings.startHour,
-                                   minute: $appState.settings.startMinute)
-                    }
-                    HStack {
-                        Text("End")
-                        Spacer()
-                        TimePicker(hour: $appState.settings.endHour,
-                                   minute: $appState.settings.endMinute)
-                    }
-                }
-
-                Section("Options") {
-                    Toggle("Launch at Login", isOn: $appState.settings.launchAtLogin)
-
-                    Toggle("Log to Apple Health", isOn: $appState.settings.logToHealth)
-                        .help("Sessions over 60 seconds are logged as Mindfulness to Apple Health.")
-                }
-            }
-            .formStyle(.grouped)
+            .transition(.push(from: .trailing))
+            .animation(.easeInOut(duration: 0.3), value: page)
 
             Divider()
 
             // MARK: - Footer
             HStack {
-                Spacer()
-                Button("Get Started") {
-                    Task {
-                        // Request HealthKit auth if needed, then mark onboarding complete.
-                        // The system sheet floats over this window automatically.
-                        await appState.requestHealthKitAuthorizationIfNeeded()
-                        onComplete()
-                    }
+                if page > 0 {
+                    Button("Back") { page -= 1 }
                 }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
+                Spacer()
+                if page == 0 {
+                    Button("Next") { page = 1 }
+                        .buttonStyle(.borderedProminent)
+                        .keyboardShortcut(.defaultAction)
+                } else {
+                    Button("Get Started") {
+                        Task {
+                            await appState.requestHealthKitAuthorizationIfNeeded()
+                            onComplete()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                }
             }
-            .padding(.trailing, 20)
+            .padding(.horizontal, 20)
             .padding(.vertical, 14)
         }
         .frame(width: 440)
+    }
+
+    // MARK: - Page 1: Welcome
+
+    private var welcomePage: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 96, height: 96)
+
+            Text("Welcome to BreatheBar")
+                .font(.largeTitle.bold())
+
+            Text("A quiet companion that sits in your menu bar and pulses once an hour to remind you to breathe. No notifications, no interruptions — just a subtle nudge when you're ready.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 340)
+
+            Spacer()
+        }
+        .padding(24)
+    }
+
+    // MARK: - Page 2: Settings
+
+    private var settingsPage: some View {
+        SettingsView(appState: appState)
     }
 }
 
