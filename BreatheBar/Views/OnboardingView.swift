@@ -6,6 +6,9 @@ struct OnboardingView: View {
     let onComplete: () -> Void
 
     @State private var page = 0
+    @State private var navigatingForward = true
+
+    private let pageCount = 2
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,7 +18,7 @@ struct OnboardingView: View {
                 default: settingsPage
                 }
             }
-            .transition(.push(from: .trailing))
+            .transition(.push(from: navigatingForward ? .trailing : .leading))
             .animation(.easeInOut(duration: 0.3), value: page)
 
             Divider()
@@ -23,13 +26,32 @@ struct OnboardingView: View {
             // MARK: - Footer
             HStack {
                 if page > 0 {
-                    Button("Back") { page -= 1 }
+                    Button("Back") {
+                        navigatingForward = false
+                        page -= 1
+                    }
                 }
+
                 Spacer()
+
+                // Page indicators
+                HStack(spacing: 6) {
+                    ForEach(0..<pageCount, id: \.self) { i in
+                        Circle()
+                            .fill(i == page ? Color.accentColor : Color.secondary.opacity(0.3))
+                            .frame(width: 7, height: 7)
+                    }
+                }
+
+                Spacer()
+
                 if page == 0 {
-                    Button("Next") { page = 1 }
-                        .buttonStyle(.borderedProminent)
-                        .keyboardShortcut(.defaultAction)
+                    Button("Next") {
+                        navigatingForward = true
+                        page = 1
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
                 } else {
                     Button("Get Started") {
                         Task {
@@ -69,6 +91,7 @@ struct OnboardingView: View {
             Spacer()
         }
         .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Page 2: Settings
